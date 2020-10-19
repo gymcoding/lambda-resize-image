@@ -1,8 +1,8 @@
-service: lambda-microservice-bolierplate # Service Name
+service: resize-image # Service Name
 plugins:
   - serverless-plugin-typescript
   - serverless-prune-plugin
-  - serverless-apigw-binary
+  # - serverless-apigw-binary
 # frameworkVersion: ">=1.1.0 <2.0.0"
 custom:
   prune:
@@ -16,88 +16,43 @@ custom:
 provider:
   name: aws
   runtime: nodejs12.x
-  region: ${opt:region, 'ap-northeast-2'}
-  environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  region: ${opt:region, 'us-east-1'}
+  # environment:
+    # DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+        - "s3:*"
+      Resource: "*"
+    # - Effect: "Allow"
+    #   Action: "s3:*"
+    #   Resource: "*"
 functions:
-  api:
-    name: aws-serverless-express-api-${opt:stage, self:provider.stage}-lambda
-    handler: src/lambda.handler
+  viewerRequestAtEdge:
+    name: ${self:service}-viewerRequestAtEdge-${opt:stage, self:provider.stage}-lambda
+    handler: src/functions/viewerRequestAtEdge.handler
     events:
-      - http:
-          path: '/{proxy+}'
-          method: ANY
-          cors: true
-      - http:
-          path: '/{proxy+}'
-          method: OPTIONS
-          cors: true
+      - cloudFront:
+          eventType: viewer-request
+          origin: s3://opensls-image-${opt:stage, self:provider.stage}.s3.amazonaws.com/images
+    package:
+      include:
+        - src/functions/viewerRequestAtEdge.js
+      exclude:
+        - node_modules/sharp/**
+        - src/**
+  originResponseAtEdge:
+    name: ${self:service}-originResponseAtEdge-${opt:stage, self:provider.stage}-lambda
+    handler: src/functions/originResponseAtEdge.handler
+    events:
+      - cloudFront:
+          eventType: origin-response
+          origin: s3://opensls-image-${opt:stage, self:provider.stage}.s3.amazonaws.com/images
+    package:
+      include:
+        - src/functions/originResponseAtEdge.js
+      exclude:
+        - src/**
 package: # Optional deployment packaging configuration
   excludeDevDependencies: true
   individually: true
-  # include: # Specify the directories and files which should be included in the deployment package
-  #   - ./build
-  # create:
-  #   name: aws-serverless-express-create-${opt:stage, self:provider.stage}-lambda
-  #   handler: src/todos/create.create
-  #   events:
-  #     - http:
-  #         path: todos
-  #         method: post
-  #         cors: true
-
-  # list:
-  #   name: aws-serverless-express-list-${opt:stage, self:provider.stage}-lambda
-  #   handler: src/todos/list.list
-  #   events:
-  #     - http:
-  #         path: todos
-  #         method: get
-  #         cors: true
-        
-  # get:
-  #   name: aws-serverless-express-get-${opt:stage, self:provider.stage}-lambda
-  #   handler: src/todos/get.get
-  #   events:
-  #     - http:
-  #         path: todos/{id}
-  #         method: get
-  #         cors: true
-        
-  # update:
-  #   name: aws-serverless-express-update-${opt:stage, self:provider.stage}-lambda
-  #   handler: src/todos/update.update
-  #   events:
-  #     - http:
-  #         path: todos/{id}
-  #         method: put
-  #         cors: true        
-
-resources:
-  Resources:
-    TodosDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
-      Properties:
-        AttributeDefinitions:
-          -
-            AttributeName: id
-            AttributeType: S
-        KeySchema:
-          -
-            AttributeName: id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.DYNAMODB_TABLE}
