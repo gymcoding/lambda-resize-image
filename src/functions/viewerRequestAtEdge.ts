@@ -14,7 +14,7 @@ const variables = {
 module.exports.handler = (event: any, context: any, callback: any) => {
   const request = event.Records[0].cf.request
   const headers = request.headers
-  console.log(`### request: ${JSON.stringify(request)}, headers: ${JSON.stringify(headers)} ###`)
+  console.log(`### ~! request: ${JSON.stringify(request)}, headers: ${JSON.stringify(headers)} ###`)
 
   // 쿼리 문자열 키-값 쌍을 구문 분석합니다. 우리의 경우 d = 100x100
   const params = querystring.parse(request.querystring)
@@ -61,7 +61,7 @@ module.exports.handler = (event: any, context: any, callback: any) => {
     }
   }
   // 허용 된 차원에서 차이가있는 일치 항목이 없으면 기본값으로 설정합니다.
-  // 치수.
+  // 치수~!
   if (!matchFound) {
     width = variables.defaultDimension.w
     height = variables.defaultDimension.h
@@ -87,5 +87,8 @@ module.exports.handler = (event: any, context: any, callback: any) => {
 
   // final modified url is of format /images/200x200/webp/image.jpg
   request.uri = fwdUri
+  request.querystring = querystring.stringify(params)
+  console.log('request.querystring: ', request.querystring)
+  console.log('RESULT request: ', JSON.stringify(request))
   callback(null, request)
 }

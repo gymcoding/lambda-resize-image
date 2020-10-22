@@ -16,10 +16,11 @@ const BUCKET = 'opensls-image-dev'
 module.exports.handler = (event: any, context: any, callback: any) => {
   let response = event.Records[0].cf.response
   console.log('Response status code :%s', response.status)
-
+  console.log('event: ', JSON.stringify(event))
+  let request = event.Records[0].cf.request
+  console.log('request: ', JSON.stringify(request))
   // 이미지가 없는지 확인
-  if (response.status === 404) {
-    let request = event.Records[0].cf.request
+  if (response.status == 404 || response.status == 403) {
     let params = querystring.parse(request.querystring)
     console.log('request: ', request)
     console.log('params: ', params)
@@ -101,11 +102,12 @@ module.exports.handler = (event: any, context: any, callback: any) => {
         callback(null, response)
       })
     .catch((err: any) => {
-      console.log('Exception while reading source image :%j',err)
+      console.log('Exception while reading source image :%j', err)
     })
     // 응답 statusCode를 확인하는 if 블록의 끝
   } else {
     // 응답을 통과시키다
+    console.log('response: ', response)
     callback(null, response)
   }
   // const response = event.Records[0].cf.response
