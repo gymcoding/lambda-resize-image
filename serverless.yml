@@ -24,9 +24,6 @@ provider:
       Action:
         - "s3:*"
       Resource: "*"
-    # - Effect: "Allow"
-    #   Action: "s3:*"
-    #   Resource: "*"
 functions:
   viewerRequestAtEdge:
     name: ${self:service}-viewerRequestAtEdge-${opt:stage, self:provider.stage}-lambda
@@ -53,6 +50,23 @@ functions:
         - src/functions/originResponseAtEdge.js
       exclude:
         - src/**
+resources:
+  Resources:
+    CloudFrontDistribution:
+      Type: 'AWS::CloudFront::Distribution'
+      Properties:
+        DistributionConfig:
+          DefaultCacheBehavior:
+            ViewerProtocolPolicy: 'redirect-to-https'
+            Compress: true
+            ForwardedValues:
+              QueryString: true
+              QueryStringCacheKeys:
+                - d
+                - a
+          Enabled: true
+          PriceClass: 'PriceClass_All'
+          HttpVersion: 'http2'
 package: # Optional deployment packaging configuration
   excludeDevDependencies: true
   individually: true
