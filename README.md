@@ -20,3 +20,9 @@ serverless deploy function -f originResponseAtEdge
 ## 주의사항
 - Sharp 모듈 Lambda Install
   - https://sharp.pixelplumbing.com/install#aws-lambda
+
+
+# serverless cloud front 설정 참고
+ - https://www.serverless.com/framework/docs/providers/aws/events/cloudfront/
+# cloud front 설정값 참고
+ - https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-values-specify.html
