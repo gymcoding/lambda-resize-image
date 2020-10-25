@@ -17,6 +17,7 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: ${opt:region, 'us-east-1'}
+  timeout: 10
   # environment:
     # DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
@@ -25,22 +26,23 @@ provider:
         - "s3:*"
       Resource: "*"
 functions:
-  viewerRequestAtEdge:
-    name: ${self:service}-viewerRequestAtEdge-${opt:stage, self:provider.stage}-lambda
-    handler: src/functions/viewerRequestAtEdge.handler
-    events:
-      - cloudFront:
-          eventType: viewer-request
-          origin: s3://opensls-image-${opt:stage, self:provider.stage}.s3.amazonaws.com/images
-    package:
-      include:
-        - src/functions/viewerRequestAtEdge.js
-      exclude:
-        - node_modules/sharp/**
-        - src/**
+  # viewerRequestAtEdge:
+  #   name: ${self:service}-viewerRequestAtEdge-${opt:stage, self:provider.stage}-lambda
+  #   handler: src/functions/viewerRequestAtEdge.handler
+  #   events:
+  #     - cloudFront:
+  #         eventType: viewer-request
+  #         origin: s3://opensls-image-${opt:stage, self:provider.stage}.s3.amazonaws.com/images
+  #   package:
+  #     include:
+  #       - src/functions/viewerRequestAtEdge.js
+  #     exclude:
+  #       - node_modules/sharp/**
+  #       - src/**
   originResponseAtEdge:
     name: ${self:service}-originResponseAtEdge-${opt:stage, self:provider.stage}-lambda
     handler: src/functions/originResponseAtEdge.handler
+    timeout: 10
     events:
       - cloudFront:
           eventType: origin-response
@@ -62,8 +64,10 @@ resources:
             ForwardedValues:
               QueryString: true
               QueryStringCacheKeys:
-                - d
-                - a
+                - s
+                - t
+                - q
+                - f
           Enabled: true
           PriceClass: 'PriceClass_All'
           HttpVersion: 'http2'
